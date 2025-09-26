@@ -3,7 +3,7 @@ name: Build Docker Image
 on:
   push:
     tags:
-      - "*"
+      - '*'
 jobs:
   build_docker_image:
     name: Build Docker Image
@@ -36,7 +36,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            tbphp/gpt-load
+            ShangjinTang/gpt-load
             ghcr.io/${{ github.repository }}
           flavor: |
             latest=false

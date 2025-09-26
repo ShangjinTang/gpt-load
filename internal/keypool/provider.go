@@ -3,11 +3,6 @@ package keypool
 import (
 	"errors"
 	"fmt"
-	"gpt-load/internal/config"
-	"gpt-load/internal/encryption"
-	app_errors "gpt-load/internal/errors"
-	"gpt-load/internal/models"
-	"gpt-load/internal/store"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -15,6 +10,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	"gpt-load/internal/config"
+	"gpt-load/internal/encryption"
+	app_errors "gpt-load/internal/errors"
+	"gpt-load/internal/models"
+	"gpt-load/internal/store"
 )
 
 type KeyProvider struct {
@@ -90,12 +91,11 @@ func (p *KeyProvider) SelectKey(groupID uint) (*models.APIKey, error) {
 // UpdateStatus 异步地提交一个 Key 状态更新任务。
 func (p *KeyProvider) UpdateStatus(apiKey *models.APIKey, group *models.Group, isSuccess bool, errorMessage string) {
 	go func() {
-		keyHashKey := fmt.Sprintf("key:%d", apiKey.ID)
-		activeKeysListKey := fmt.Sprintf("group:%d:active_keys", group.ID)
-
 		if isSuccess {
+			keyHashKey := fmt.Sprintf("key:%d", apiKey.ID)
+			activeKeysListKey := fmt.Sprintf("group:%d:active_keys", group.ID)
 			if err := p.handleSuccess(apiKey.ID, keyHashKey, activeKeysListKey); err != nil {
-				logrus.WithFields(logrus.Fields{"keyID": apiKey.ID, "error": err}).Error("Failed to handle key success")
+				logrus.WithFields(logrus.Fields{"keyID": apiKey.ID, "error": err}).Debug("Failed to update cache after success")
 			}
 		} else {
 			if app_errors.IsUnCounted(errorMessage) {
@@ -104,8 +104,10 @@ func (p *KeyProvider) UpdateStatus(apiKey *models.APIKey, group *models.Group, i
 					"error": errorMessage,
 				}).Debug("Uncounted error, skipping failure handling")
 			} else {
+				keyHashKey := fmt.Sprintf("key:%d", apiKey.ID)
+				activeKeysListKey := fmt.Sprintf("group:%d:active_keys", group.ID)
 				if err := p.handleFailure(apiKey, group, keyHashKey, activeKeysListKey); err != nil {
-					logrus.WithFields(logrus.Fields{"keyID": apiKey.ID, "error": err}).Error("Failed to handle key failure")
+					logrus.WithFields(logrus.Fields{"keyID": apiKey.ID, "error": err}).Debug("Failed to update cache after failure")
 				}
 			}
 		}
@@ -245,7 +247,7 @@ func (p *KeyProvider) LoadKeysFromDB() error {
 	batchSize := 1000
 	var batchKeys []*models.APIKey
 
-	err := p.db.Model(&models.APIKey{}).FindInBatches(&batchKeys, batchSize, func(tx *gorm.DB, batch int) error {
+	err := p.db.Model(&models.APIKey{}).Where("status IN ?", []string{"active", "degraded"}).FindInBatches(&batchKeys, batchSize, func(tx *gorm.DB, batch int) error {
 		logrus.Debugf("Processing batch %d with %d keys...", batch, len(batchKeys))
 
 		var pipeline store.Pipeliner

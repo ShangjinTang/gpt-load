@@ -7,12 +7,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-// Key状态
-const (
-	KeyStatusActive  = "active"
-	KeyStatusInvalid = "invalid"
-)
-
 // SystemSetting 对应 system_settings 表
 type SystemSetting struct {
 	ID           uint      `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -80,12 +74,21 @@ type APIKey struct {
 	KeyValue     string     `gorm:"type:text;not null" json:"key_value"`
 	KeyHash      string     `gorm:"type:varchar(128);index" json:"key_hash"`
 	GroupID      uint       `gorm:"not null;index" json:"group_id"`
-	Status       string     `gorm:"type:varchar(50);not null;default:'active'" json:"status"`
+	Status       string     `gorm:"type:varchar(50);not null;default:'pending'" json:"status"` // Default to 'pending'
 	RequestCount int64      `gorm:"not null;default:0" json:"request_count"`
 	FailureCount int64      `gorm:"not null;default:0" json:"failure_count"`
 	LastUsedAt   *time.Time `json:"last_used_at"`
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
+
+	// 状态机相关字段
+	LastFailureAt       *time.Time `json:"last_failure_at"`
+	LastSuccessAt       *time.Time `json:"last_success_at"`
+	LastValidatedAt     *time.Time `json:"last_validated_at"`
+	DisabledUntil       *time.Time `json:"disabled_until"`
+	ConsecutiveFailures int64      `gorm:"not null;default:0" json:"consecutive_failures"`
+	LastErrorMessage    string     `gorm:"type:text" json:"last_error_message"`
+	BackoffLevel        int        `gorm:"not null;default:0" json:"backoff_level"`
 }
 
 // RequestType 请求类型常量

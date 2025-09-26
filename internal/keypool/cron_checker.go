@@ -4,6 +4,7 @@ import (
 	"context"
 	"gpt-load/internal/config"
 	"gpt-load/internal/encryption"
+	"gpt-load/internal/interfaces"
 	"gpt-load/internal/models"
 	"sync"
 	"sync/atomic"
@@ -17,7 +18,7 @@ import (
 type CronChecker struct {
 	DB              *gorm.DB
 	SettingsManager *config.SystemSettingsManager
-	Validator       *KeyValidator
+	Validator       interfaces.KeyValidatorInterface
 	EncryptionSvc   encryption.Service
 	stopChan        chan struct{}
 	wg              sync.WaitGroup
@@ -27,7 +28,7 @@ type CronChecker struct {
 func NewCronChecker(
 	db *gorm.DB,
 	settingsManager *config.SystemSettingsManager,
-	validator *KeyValidator,
+	validator interfaces.KeyValidatorInterface,
 	encryptionSvc encryption.Service,
 ) *CronChecker {
 	return &CronChecker{

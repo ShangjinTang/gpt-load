@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"gpt-load/internal/encryption"
-	"gpt-load/internal/keypool"
+	"gpt-load/internal/interfaces"
 	"gpt-load/internal/models"
+	"gpt-load/internal/validator"
 	"io"
 	"regexp"
 	"strings"
@@ -43,13 +44,13 @@ type RestoreKeysResult struct {
 // KeyService provides services related to API keys.
 type KeyService struct {
 	DB            *gorm.DB
-	KeyProvider   *keypool.KeyProvider
-	KeyValidator  *keypool.KeyValidator
+	KeyProvider   interfaces.KeyProviderInterface
+	KeyValidator  interfaces.KeyValidatorInterface
 	EncryptionSvc encryption.Service
 }
 
 // NewKeyService creates a new KeyService.
-func NewKeyService(db *gorm.DB, keyProvider *keypool.KeyProvider, keyValidator *keypool.KeyValidator, encryptionSvc encryption.Service) *KeyService {
+func NewKeyService(db *gorm.DB, keyProvider interfaces.KeyProviderInterface, keyValidator interfaces.KeyValidatorInterface, encryptionSvc encryption.Service) *KeyService {
 	return &KeyService{
 		DB:            db,
 		KeyProvider:   keyProvider,
@@ -313,7 +314,7 @@ func (s *KeyService) ListKeysInGroupQuery(groupID uint, statusFilter string, sea
 }
 
 // TestMultipleKeys handles a one-off validation test for multiple keys.
-func (s *KeyService) TestMultipleKeys(group *models.Group, keysText string) ([]keypool.KeyTestResult, error) {
+func (s *KeyService) TestMultipleKeys(group *models.Group, keysText string) ([]validator.KeyTestResult, error) {
 	keysToTest := s.ParseKeysFromText(keysText)
 	if len(keysToTest) > maxRequestKeys {
 		return nil, fmt.Errorf("batch size exceeds the limit of %d keys, got %d", maxRequestKeys, len(keysToTest))
@@ -322,7 +323,7 @@ func (s *KeyService) TestMultipleKeys(group *models.Group, keysText string) ([]k
 		return nil, fmt.Errorf("no valid keys found in the input text")
 	}
 
-	var allResults []keypool.KeyTestResult
+	var allResults []validator.KeyTestResult
 	for i := 0; i < len(keysToTest); i += chunkSize {
 		end := i + chunkSize
 		if end > len(keysToTest) {
@@ -333,7 +334,16 @@ func (s *KeyService) TestMultipleKeys(group *models.Group, keysText string) ([]k
 		if err != nil {
 			return nil, err
 		}
-		allResults = append(allResults, results...)
+
+		// Convert []interface{} to []validator.KeyTestResult
+		for _, r := range results {
+			if result, ok := r.(validator.KeyTestResult); ok {
+				allResults = append(allResults, result)
+			} else {
+				// Handle cases where the type assertion fails, if necessary
+				logrus.Warnf("Unexpected type in TestMultipleKeys result: %T", r)
+			}
+		}
 	}
 
 	return allResults, nil

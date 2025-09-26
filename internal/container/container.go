@@ -9,14 +9,18 @@ import (
 	"gpt-load/internal/encryption"
 	"gpt-load/internal/handler"
 	"gpt-load/internal/httpclient"
+	"gpt-load/internal/interfaces"
 	"gpt-load/internal/keypool"
+	"gpt-load/internal/policy"
 	"gpt-load/internal/proxy"
 	"gpt-load/internal/router"
 	"gpt-load/internal/services"
 	"gpt-load/internal/store"
 	"gpt-load/internal/types"
+	"gpt-load/internal/validator"
 
 	"go.uber.org/dig"
+	"gorm.io/gorm"
 )
 
 // BuildContainer creates a new dependency injection container and provides all the application's services.
@@ -76,10 +80,50 @@ func BuildContainer() (*dig.Container, error) {
 	if err := container.Provide(services.NewGroupManager); err != nil {
 		return nil, err
 	}
+	if err := container.Provide(services.NewKeyStateService); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(func(db *gorm.DB) *policy.PolicyEngine {
+		return policy.NewPolicyEngine(db)
+	}); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(func(db *gorm.DB) *policy.PolicyService {
+		return policy.NewPolicyService(db)
+	}); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(services.NewKeyPolicyHandler); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(services.NewIncrementalValidationService); err != nil {
+		return nil, err
+	}
+	// Provide interface implementations
+	if err := container.Provide(func(engine *policy.PolicyEngine) interfaces.PolicyEngineInterface {
+		return engine
+	}); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(func(service *services.KeyStateService) interfaces.KeyStateServiceInterface {
+		return service
+	}); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(func(handler *services.KeyPolicyHandler) interfaces.KeyPolicyHandlerInterface {
+		return handler
+	}); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(func(service *services.IncrementalValidationService) interfaces.IncrementalValidationServiceInterface {
+		return service
+	}); err != nil {
+		return nil, err
+	}
 	if err := container.Provide(keypool.NewProvider); err != nil {
 		return nil, err
 	}
-	if err := container.Provide(keypool.NewKeyValidator); err != nil {
+	if err := container.Provide(validator.NewKeyValidator); err != nil {
 		return nil, err
 	}
 	if err := container.Provide(keypool.NewCronChecker); err != nil {
@@ -91,6 +135,9 @@ func BuildContainer() (*dig.Container, error) {
 		return nil, err
 	}
 	if err := container.Provide(handler.NewCommonHandler); err != nil {
+		return nil, err
+	}
+	if err := container.Provide(handler.NewIncrementalValidationHandler); err != nil {
 		return nil, err
 	}
 

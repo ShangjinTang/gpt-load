@@ -21,7 +21,7 @@ func Init() error {
 	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
 
 	// 加载支持的语言文件
-	languages := []string{"zh-CN", "en-US", "ja-JP"}
+	languages := []string{"zh-CN", "en-US"}
 	for _, lang := range languages {
 		if err := loadMessageFile(lang); err != nil {
 			return fmt.Errorf("failed to load language file %s: %w", lang, err)
@@ -91,8 +91,6 @@ func normalizeLanguageCode(lang string) string {
 		return "zh-CN"
 	case "en", "en-us":
 		return "en-US"
-	case "ja", "ja-jp":
-		return "ja-JP"
 	default:
 		// 尝试匹配前缀
 		if strings.HasPrefix(strings.ToLower(lang), "zh") {
@@ -100,9 +98,6 @@ func normalizeLanguageCode(lang string) string {
 		}
 		if strings.HasPrefix(strings.ToLower(lang), "en") {
 			return "en-US"
-		}
-		if strings.HasPrefix(strings.ToLower(lang), "ja") {
-			return "ja-JP"
 		}
 		// 默认返回中文
 		return "zh-CN"
@@ -133,8 +128,6 @@ func getMessages(lang string) map[string]string {
 	switch lang {
 	case "en-US":
 		return locales.MessagesEnUS
-	case "ja-JP":
-		return locales.MessagesJaJP
 	default:
 		return locales.MessagesZhCN
 	}

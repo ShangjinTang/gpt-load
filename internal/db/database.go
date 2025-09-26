@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
-	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -44,15 +43,6 @@ func NewDB(configManager types.ConfigManager) (*gorm.DB, error) {
 			DSN:                  dsn,
 			PreferSimpleProtocol: true,
 		})
-	} else if strings.Contains(dsn, "@tcp") {
-		if !strings.Contains(dsn, "parseTime") {
-			if strings.Contains(dsn, "?") {
-				dsn += "&parseTime=true"
-			} else {
-				dsn += "?parseTime=true"
-			}
-		}
-		dialector = mysql.Open(dsn)
 	} else {
 		if err := os.MkdirAll(filepath.Dir(dsn), 0755); err != nil {
 			return nil, fmt.Errorf("failed to create database directory: %w", err)
