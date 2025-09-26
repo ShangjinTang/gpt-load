@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"os"
 	"os/signal"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"gpt-load/internal/app"
-	"gpt-load/internal/commands"
 	"gpt-load/internal/container"
 	"gpt-load/internal/types"
 	"gpt-load/internal/utils"
@@ -19,11 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//go:embed web/dist
-var buildFS embed.FS
-
-//go:embed web/dist/index.html
-var indexPage []byte
 
 func main() {
 	if len(os.Args) > 1 {
@@ -36,11 +29,8 @@ func main() {
 // runCommand dispatches to the appropriate command handler
 func runCommand() {
 	command := os.Args[1]
-	args := os.Args[2:]
 
 	switch command {
-	case "migrate-keys":
-		commands.RunMigrateKeys(args)
 	case "help", "-h", "--help":
 		printHelp()
 	default:
@@ -59,7 +49,6 @@ func printHelp() {
 	fmt.Println("  gpt-load <command> [args]   Execute a command")
 	fmt.Println()
 	fmt.Println("Available Commands:")
-	fmt.Println("  migrate-keys    Migrate encryption keys")
 	fmt.Println("  help            Display this help message")
 	fmt.Println()
 	fmt.Println("Use 'gpt-load <command> --help' for more information about a command.")
@@ -73,13 +62,6 @@ func runServer() {
 		logrus.Fatalf("Failed to build container: %v", err)
 	}
 
-	// Provide UI assets to the container
-	if err := container.Provide(func() embed.FS { return buildFS }); err != nil {
-		logrus.Fatalf("Failed to provide buildFS: %v", err)
-	}
-	if err := container.Provide(func() []byte { return indexPage }); err != nil {
-		logrus.Fatalf("Failed to provide indexPage: %v", err)
-	}
 
 	// Initialize global logger
 	if err := container.Invoke(func(configManager types.ConfigManager) {
