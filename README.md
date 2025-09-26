@@ -424,41 +424,48 @@ GPT-Load is built with a modular, high-performance architecture designed for ent
 ### 🔧 Component Architecture
 
 #### 1. **HTTP Layer** (`internal/router`, `internal/handler`)
+
 - **Gin Framework**: High-performance HTTP routing
 - **Middleware Stack**: CORS, authentication, rate limiting, logging
 - **API Versioning**: RESTful API design with version support
 
 #### 2. **Proxy Engine** (`internal/proxy`)
+
 - **Request Routing**: Intelligent upstream selection
 - **Load Balancing**: Round-robin and weighted algorithms
 - **Circuit Breaker**: Automatic failure detection and recovery
 - **Response Processing**: Stream handling and format conversion
 
 #### 3. **Key Management** (`internal/keypool`)
+
 - **State Machine**: 5-state lifecycle (Pending → Active → Degraded → Disabled → Invalid)
 - **Rotation Algorithm**: Atomic key selection and rotation
 - **Health Monitoring**: Background validation and automatic recovery
 - **Encryption**: AES-256-GCM encryption for keys at rest
 
 #### 4. **Policy Engine** (`internal/policy`)
+
 - **Rule-Based Logic**: Flexible retry and degradation policies
 - **Pattern Matching**: Regex-based error classification
 - **Action Execution**: Automatic key state transitions
 - **Composition Strategy**: Layered policy inheritance
 
 #### 5. **Data Layer** (`internal/db`, `internal/models`)
+
 - **ORM**: GORM for database abstraction
 - **Multi-Database**: SQLite and PostgreSQL support
 - **Migrations**: Automatic schema management
 - **Connection Pooling**: Optimized database connections
 
 #### 6. **Caching Layer** (`internal/store`)
+
 - **Multi-Backend**: Memory and Redis support
 - **Key Distribution**: Consistent hashing for scalability
 - **TTL Management**: Automatic expiration and cleanup
 - **Pub/Sub**: Real-time configuration updates
 
 #### 7. **Background Services** (`internal/services`)
+
 - **Validation Service**: Periodic key health checks
 - **Log Service**: Asynchronous request logging
 - **State Service**: Key lifecycle management
@@ -467,6 +474,7 @@ GPT-Load is built with a modular, high-performance architecture designed for ent
 ### 📊 Data Flow
 
 #### Request Processing Flow
+
 ```
 1. Client Request → 2. Authentication → 3. Rate Limiting
          ↓                    ↓                 ↓
@@ -478,6 +486,7 @@ GPT-Load is built with a modular, high-performance architecture designed for ent
 ```
 
 #### Key Lifecycle Flow
+
 ```
 New Key → Validation → Active → [Success/Failure] → Policy Check
     ↓         ↓          ↓              ↓              ↓
@@ -487,6 +496,7 @@ New Key → Validation → Active → [Success/Failure] → Policy Check
 ### 🔄 State Management
 
 #### API Key States
+
 - **Pending**: Newly added, awaiting validation
 - **Active**: Validated and available for requests
 - **Degraded**: Experiencing issues but still usable
@@ -494,6 +504,7 @@ New Key → Validation → Active → [Success/Failure] → Policy Check
 - **Invalid**: Permanently invalid, excluded from rotation
 
 #### State Transitions
+
 - **Smart Backoff**: Exponential backoff for failed keys
 - **Auto Recovery**: Automatic re-validation and state restoration
 - **Policy-Driven**: Custom rules for state transitions
@@ -501,16 +512,19 @@ New Key → Validation → Active → [Success/Failure] → Policy Check
 ### 🚀 Performance Features
 
 #### Concurrency & Parallelism
+
 - **Goroutine Pools**: Controlled concurrency for validation
 - **Channel-Based**: Non-blocking communication
 - **Context Cancellation**: Graceful shutdown support
 
 #### Caching Strategy
+
 - **Multi-Level**: L1 (memory) + L2 (Redis) caching
 - **Smart Invalidation**: Event-driven cache updates
 - **Prefetching**: Predictive key loading
 
 #### Resource Optimization
+
 - **Connection Reuse**: HTTP client pooling
 - **Memory Management**: Efficient data structures
 - **Garbage Collection**: Optimized object lifecycle
@@ -518,11 +532,13 @@ New Key → Validation → Active → [Success/Failure] → Policy Check
 ### 🛡️ Security Architecture
 
 #### Encryption
+
 - **AES-256-GCM**: Industry-standard encryption
 - **Key Derivation**: PBKDF2 for key strengthening
 - **Salt Generation**: Cryptographically secure randomness
 
 #### Access Control
+
 - **API Authentication**: Bearer token validation
 - **Role-Based**: Admin and user access levels
 - **Audit Logging**: Complete request traceability
@@ -530,11 +546,13 @@ New Key → Validation → Active → [Success/Failure] → Policy Check
 ### 🔧 Configuration Management
 
 #### Hot Reload
+
 - **File Watching**: Automatic configuration updates
 - **Graceful Updates**: Zero-downtime configuration changes
 - **Validation**: Schema validation before applying changes
 
 #### Environment Support
+
 - **Multi-Environment**: Development, staging, production
 - **Override Chain**: Environment → File → Defaults
 - **Sensitive Data**: Secure handling of secrets
