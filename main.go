@@ -19,25 +19,11 @@ import (
 
 
 func main() {
-	if len(os.Args) > 1 {
-		runCommand()
-	} else {
-		runServer()
-	}
-}
-
-// runCommand dispatches to the appropriate command handler
-func runCommand() {
-	command := os.Args[1]
-
-	switch command {
-	case "help", "-h", "--help":
+	if len(os.Args) > 1 && (os.Args[1] == "help" || os.Args[1] == "-h" || os.Args[1] == "--help") {
 		printHelp()
-	default:
-		fmt.Printf("Unknown command: %s\n", command)
-		fmt.Println("Run 'gpt-load help' for usage.")
-		os.Exit(1)
+		return
 	}
+	runServer()
 }
 
 // printHelp displays the general help information
@@ -46,12 +32,7 @@ func printHelp() {
 	fmt.Println()
 	fmt.Println("Usage:")
 	fmt.Println("  gpt-load                    Start the proxy server")
-	fmt.Println("  gpt-load <command> [args]   Execute a command")
-	fmt.Println()
-	fmt.Println("Available Commands:")
-	fmt.Println("  help            Display this help message")
-	fmt.Println()
-	fmt.Println("Use 'gpt-load <command> --help' for more information about a command.")
+	fmt.Println("  gpt-load help               Display this help message")
 }
 
 // runServer run App Server
